@@ -10,6 +10,8 @@ Module Program
     Private des As String
     Private source As String
     Private buffer As Byte()
+    Private subfiles As New List(Of FileData)()
+
     Private ms As MemoryStream
 
     Sub Main(args As String())
@@ -22,7 +24,9 @@ Module Program
 
         If File.Exists(source) Then
 
+            des = Path.GetDirectoryName(source) + "\" + Path.GetFileNameWithoutExtension(source) & "\"
             br = New BinaryReader(File.OpenRead(source))
+
             Dim unknow As Int32 = br.ReadInt32
             Dim count As Int32 = br.ReadInt32
             Dim offset As Int32 = br.ReadInt32
@@ -35,21 +39,21 @@ Module Program
                 dfs.CopyTo(ms)
             End Using
 
-            Dim subfiles As New List(Of FileData)()
+
             For i As Int32 = 0 To count - 1
                 subfiles.Add(New FileData)
             Next
 
             br.BaseStream.Position = offset
 
-            des = Path.GetDirectoryName(source) + "\" + Path.GetFileNameWithoutExtension(source)
+
 
             For Each fd As FileData In subfiles
                 Console.WriteLine("File Offset : {0} - File SizeCompressed : {1} - File SizeUncompressed : {2} - File Name : {3}", fd.offset, fd.sizeCompressed, fd.sizeUncompressed, fd.name)
                 br.BaseStream.Position = fd.offset
                 Dim buffer As Byte()
-                Directory.CreateDirectory(des + "\" + Path.GetDirectoryName(fd.name))
-                Dim fs As FileStream = File.Create(des + "\" + fd.name)
+                Directory.CreateDirectory(des + Path.GetDirectoryName(fd.name))
+                Dim fs As FileStream = File.Create(des + fd.name)
                 If fd.sizeCompressed = fd.sizeUncompressed Then
                     buffer = br.ReadBytes(fd.sizeUncompressed)
                     Using bw As New BinaryWriter(fs)
